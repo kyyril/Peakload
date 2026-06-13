@@ -8,7 +8,11 @@ import io.loadtest.master.dto.*;
 import io.loadtest.master.grpc.WorkerGrpcClient;
 import io.loadtest.master.metrics.AggregatedMetricsStore;
 import io.loadtest.master.registry.WorkerRegistry;
-import io.loadtest.v1.*;
+import io.loadtest.master.dto.TestStatus;
+import io.loadtest.v1.AggregateStats;
+import io.loadtest.v1.HttpHeader;
+import io.loadtest.v1.RequestBody;
+import io.loadtest.v1.TestScenario;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -412,9 +416,9 @@ public class ScenarioOrchestrationService {
      */
     private TestScenario toProtoScenario(TestScenarioDefinition scenario) {
         io.loadtest.common.model.HttpScenario httpScenario = scenario.httpScenarios().get(0);
-        LoadProfile loadProfile = scenario.loadProfile();
+        io.loadtest.common.model.LoadProfile loadProfile = scenario.loadProfile();
 
-        HttpScenario.Builder httpBuilder = HttpScenario.newBuilder()
+        io.loadtest.v1.HttpScenario.Builder httpBuilder = io.loadtest.v1.HttpScenario.newBuilder()
                 .setUrl(httpScenario.url())
                 .setMethod(convertMethod(httpScenario.method()))
                 .setConnectTimeoutMs((int) httpScenario.connectTimeout().toMillis())
@@ -440,11 +444,11 @@ public class ScenarioOrchestrationService {
         }
 
         // Build load profile
-        LoadProfile.Builder loadBuilder = LoadProfile.newBuilder()
+        io.loadtest.v1.LoadProfile.Builder loadBuilder = io.loadtest.v1.LoadProfile.newBuilder()
                 .setTargetRps(loadProfile.targetRps())
                 .setMaxConcurrentRequests(loadProfile.maxConcurrency());
 
-        if (loadProfile instanceof LoadProfile.RampUp rampUp) {
+        if (loadProfile instanceof io.loadtest.common.model.LoadProfile.RampUp rampUp) {
             loadBuilder.setRampUpDurationMs(rampUp.rampUpDuration().toMillis());
             loadBuilder.setHoldDurationMs(rampUp.holdDuration().toMillis());
             loadBuilder.setRampDownDurationMs(rampUp.rampDownDuration().toMillis());
@@ -462,7 +466,7 @@ public class ScenarioOrchestrationService {
                 .build();
     }
 
-    private io.loadtest.v1.HttpMethod convertMethod(HttpScenario.HttpMethod method) {
+    private io.loadtest.v1.HttpMethod convertMethod(io.loadtest.common.model.HttpScenario.HttpMethod method) {
         return switch (method) {
             case GET -> io.loadtest.v1.HttpMethod.HTTP_METHOD_GET;
             case POST -> io.loadtest.v1.HttpMethod.HTTP_METHOD_POST;
@@ -490,9 +494,9 @@ public class ScenarioOrchestrationService {
                 scenario.loadProfile().targetRps(),
                 scenario.loadProfile().maxConcurrency(),
                 scenario.loadProfile().estimatedDurationMs().orElse(0L) / 1000,
-                scenario.loadProfile() instanceof LoadProfile.RampUp ? "rampup"
-                        : scenario.loadProfile() instanceof LoadProfile.Spike ? "spike"
-                        : scenario.loadProfile() instanceof LoadProfile.StepUp ? "stepup" : "constant",
+                scenario.loadProfile() instanceof io.loadtest.common.model.LoadProfile.RampUp ? "rampup"
+                        : scenario.loadProfile() instanceof io.loadtest.common.model.LoadProfile.Spike ? "spike"
+                        : scenario.loadProfile() instanceof io.loadtest.common.model.LoadProfile.StepUp ? "stepup" : "constant",
                 state != null ? state.status().name() : "UNKNOWN",
                 scenario.createdTimestampMs(),
                 state != null && state.startedAt() != null ? state.startedAt().toEpochMilli() : 0,

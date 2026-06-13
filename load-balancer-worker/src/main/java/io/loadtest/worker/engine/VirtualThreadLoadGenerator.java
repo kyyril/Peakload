@@ -499,9 +499,9 @@ public final class VirtualThreadLoadGenerator implements AutoCloseable {
         // Set method and body
         switch (scenario) {
             case HttpScenario.Get get -> builder.GET();
-            case HttpScenario.Post post -> builder.POST(HttpRequest.BodyPublishers.ofString(post.body().content()));
-            case HttpScenario.Put put -> builder.PUT(HttpRequest.BodyPublishers.ofString(put.body().content()));
-            case HttpScenario.Patch patch -> builder.method("PATCH", HttpRequest.BodyPublishers.ofString(patch.body().content()));
+            case HttpScenario.Post post -> builder.POST(HttpRequest.BodyPublishers.ofString(post.requestBody().content()));
+            case HttpScenario.Put put -> builder.PUT(HttpRequest.BodyPublishers.ofString(put.requestBody().content()));
+            case HttpScenario.Patch patch -> builder.method("PATCH", HttpRequest.BodyPublishers.ofString(patch.requestBody().content()));
             case HttpScenario.Delete delete -> builder.DELETE();
             case HttpScenario.Custom custom -> {
                 HttpRequest.BodyPublisher body = custom.body()

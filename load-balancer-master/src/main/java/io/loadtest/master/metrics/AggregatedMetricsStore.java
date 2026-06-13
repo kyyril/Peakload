@@ -150,7 +150,7 @@ public class AggregatedMetricsStore {
         TestResultSummary toSummary(String scenarioId) {
             long total = totalRequests.sum();
             if (total == 0) {
-                return new TestResultSummary(scenarioId, "", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "COMPLETE", "", Map.of(), Map.of());
+                return new TestResultSummary(scenarioId, "", 0L, 0L, 0L, 0.0, 0.0, 0L, 0L, 0L, 0L, 0L, 0.0, 0.0, 0L, 0L, 0.0, "COMPLETE", "", Map.of(), Map.of());
             }
 
             long elapsedMs = java.time.Duration.between(startTime, Instant.now()).toMillis();

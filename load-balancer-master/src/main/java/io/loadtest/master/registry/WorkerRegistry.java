@@ -188,7 +188,7 @@ public class WorkerRegistry {
     public List<WorkerInfo> findAvailableWorkers(int requiredCapacity) {
         return getAllWorkers().stream()
                 .filter(w -> "IDLE".equals(w.status()))
-                .filter(this::isAlive)
+                .filter(w -> isAlive(w.workerId()))
                 .sorted(Comparator.comparingInt(WorkerInfo::availableCores).reversed())
                 .limit(10)
                 .toList();
