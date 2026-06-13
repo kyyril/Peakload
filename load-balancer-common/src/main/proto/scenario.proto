@@ -16,10 +16,6 @@ option java_multiple_files = true;
 option java_package = "io.loadtest.v1";
 option java_outer_classname = "LoadTestProtos";
 
-// ============================================================
-// ENUMERATIONS
-// ============================================================
-
 /**
  * HTTP methods supported by the load generator.
  */
@@ -59,10 +55,6 @@ enum TestStatus {
   TEST_STATUS_FAILED = 6;
   TEST_STATUS_CANCELLED = 7;
 }
-
-// ============================================================
-// MESSAGE DEFINITIONS - SCENARIO CONFIGURATION
-// ============================================================
 
 /**
  * HTTP header for request configuration.
@@ -129,10 +121,6 @@ message TestScenario {
   map<string, string> tags = 5;             // Metadata tags for filtering/grouping results
   int64 created_timestamp_ms = 6;           // Creation timestamp (epoch millis)
 }
-
-// ============================================================
-// MESSAGE DEFINITIONS - METRICS & RESULTS
-// ============================================================
 
 /**
  * Single request execution metric.
@@ -202,10 +190,6 @@ message AggregateStats {
   map<string, int64> error_counts = 31;     // Error type -> count
 }
 
-// ============================================================
-// MESSAGE DEFINITIONS - WORKER MANAGEMENT
-// ============================================================
-
 /**
  * Worker registration request.
  * Sent when a worker starts up and connects to the master.
@@ -230,7 +214,7 @@ message WorkerHeartbeat {
   WorkerStatus status = 3;
   int32 active_threads = 4;                 // Currently running virtual threads
   double cpu_usage_percent = 5;             // CPU utilization
-  long used_memory_mb = 6;                  // Memory in use
+  int64 used_memory_mb = 6;                 // Memory in use
   int32 active_scenarios = 7;               // Number of scenarios this worker is executing
 }
 
@@ -242,10 +226,6 @@ message WorkerStateUpdate {
   bool accepted = 2;
   optional string rejection_reason = 3;
 }
-
-// ============================================================
-// SERVICE DEFINITIONS
-// ============================================================
 
 /**
  * Master-side gRPC service.
@@ -285,10 +265,6 @@ service WorkerService {
   // Health check
   rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
 }
-
-// ============================================================
-// HELPER MESSAGES
-// ============================================================
 
 message AckResponse {
   bool success = 1;

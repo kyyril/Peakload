@@ -25,42 +25,7 @@ import java.util.concurrent.atomic.*;
  * - StartTest: Begin load generation at specified time
  * - StopTest: Graceful or immediate shutdown
  * - GetStats: Real-time aggregate statistics
- *
- * Architecture:
- * ┌──────────────────────────────────────────────────────────────┐
- * │                    WorkerGrpcService                         │
- * │                                                               │
- * │   ┌─────────────┐    ┌─────────────────────────────────┐    │
- * │   │ Deploy RPC  │───►│  ScenarioManager                 │    │
-    │   └─────────────┘    │  - Parse scenario                │    │
- * │                       │  - LoadGenerator instances        │    │
- * │   ┌─────────────┐    │                                   │    │
- * │   │ Start RPC   │───►│  start(scenarioId, timestamp)    │    │
- * │   └─────────────┘    │                                   │    │
---│
- * │                       │  MetricsCollector ◄────────────┐   │
---│
- * │                                                       │    │
- * │                                                       │
- * │   ┌─────────────┐                                    │    │
---│
- * │                   └─────────────────────────────────┘    │
- * │   ┌─────────────┐    ┌─────────────────────────────────┐ │
---│
- * │   │ Stop RPC    │───►│  stop(immediate)                 │ │
---│
- * │   └─────────────┘    │                                   │ │
---│
- * │                       └─────────────────────────────────┘ │
---│
- * │   ┌─────────────┐    ┌─────────────────────────────────┐ │
---│
- * │   │ GetStats RPC│───►│  MetricsCollector.getStats()    │ │
---│
- * │   └─────────────┘    └─────────────────────────────────┘ │
---│
- * └──────────────────────────────────────────────────────────────┘
- *
+
  * Thread Safety:
  * - scenarioManager: Thread-safe ConcurrentHashMap
  * - MetricsCollector: Lock-free internal implementation

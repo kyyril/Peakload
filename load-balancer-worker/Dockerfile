@@ -1,9 +1,5 @@
-# ============================================================
-# Worker Node Dockerfile
-# ============================================================
 # Optimized for minimal footprint and maximum I/O performance.
 # Uses Eclipse Temurin (OpenJDK) 21 LTS with ZGC.
-# ============================================================
 
 ARG JAVA_VERSION=21
 
@@ -12,8 +8,8 @@ FROM eclipse-temurin:${JAVA_VERSION}-jdk-alpine AS builder
 
 WORKDIR /build
 
-# Install Maven
-RUN apk add --no-cache maven
+# Install Maven and build tools
+RUN apk add --no-cache maven build-base protobuf protobuf-dev gcompat libc6-compat
 
 # Copy root pom and all modules
 COPY pom.xml .
@@ -47,17 +43,17 @@ USER worker
 
 # JVM configuration for load generation
 ENV JAVA_OPTS="-XX:+UseZGC \
-              -XX:+ZGenerational \
-              -XX:+UnlockExperimentalVMOptions \
-              -XX:ZAllocationSpikeTolerance=5 \
-              -XX:+ExitOnOutOfMemoryError \
-              -Xms512m \
-              -Xmx1g \
-              -XX:+HeapDumpOnOutOfMemoryError \
-              -XX:HeapDumpPath=/var/log/loadtest \
-              -Xlog:gc*:file=/var/log/loadtest/gc.log:time,uptime,level,tags \
-              --enable-preview \
-              -Djava.util.concurrent.ForkJoinPool.common.parallelism=2"
+  -XX:+ZGenerational \
+  -XX:+UnlockExperimentalVMOptions \
+  -XX:ZAllocationSpikeTolerance=5 \
+  -XX:+ExitOnOutOfMemoryError \
+  -Xms512m \
+  -Xmx1g \
+  -XX:+HeapDumpOnOutOfMemoryError \
+  -XX:HeapDumpPath=/var/log/loadtest \
+  -Xlog:gc*:file=/var/log/loadtest/gc.log:time,uptime,level,tags \
+  --enable-preview \
+  -Djava.util.concurrent.ForkJoinPool.common.parallelism=2"
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \

@@ -188,12 +188,12 @@ public enum HttpStatus {
             case 511 -> NETWORK_AUTHENTICATION_REQUIRED;
             default -> {
                 // Dynamic status codes that we don't explicitly enumerate
-                if (code >= 100 && code < 200) yield INFORMATIONAL;
-                else if (code >= 200 && code < 300) yield SUCCESS; // treated as success
-                else if (code >= 300 && code < 400) yield REDIRECT;
-                else if (code >= 400 && code < 500) yield CLIENT_ERROR;
-                else if (code >= 500 && code < 600) yield SERVER_ERROR;
-                else yield HttpStatus.UNKNOWN;
+                if (code >= 100 && code < 200) yield CONTINUE;
+                else if (code >= 200 && code < 300) yield OK;
+                else if (code >= 300 && code < 400) yield TEMPORARY_REDIRECT;
+                else if (code >= 400 && code < 500) yield BAD_REQUEST;
+                else if (code >= 500 && code < 600) yield INTERNAL_SERVER_ERROR;
+                else yield CONNECTION_ERROR;
             }
         };
     }

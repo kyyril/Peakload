@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
  * Worker Node Entry Point.
  *
  * JVM Configuration for Virtual Threads and ZGC:
- * ─────────────────────────────────────────────────
  * java --enable-preview \\
  *      -XX:+UseZGC -XX:+ZGenerational \\
  *      -XX:+UnlockExperimentalVMOptions -XX:ZAllocationSpikeTolerance=5 \\
@@ -41,7 +40,6 @@ import java.util.concurrent.TimeUnit;
  *   - Maximum heap: 2GB (fits most scenarios; scale horizontally if more needed)
  *
  * Launch Command Example:
- * ─────────────────────
  * docker run -e WORKER_ID=worker-1 \
  *            -e MASTER_HOST=master \
  *            -e MASTER_PORT=9090 \

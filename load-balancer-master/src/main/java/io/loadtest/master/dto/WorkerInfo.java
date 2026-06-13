@@ -22,35 +22,3 @@ public record WorkerInfo(
         long usedMemoryMb
 ) {}
 
-/**
- * Worker health check result.
- */
-public record WorkerHealth(
-        String workerId,
-        boolean healthy,
-        String status,
-        String message,
-        Map<String, Object> details
-) {}
-
-/**
- * Worker registration request.
- */
-public record WorkerRegistrationRequest(
-        String workerId,
-        String hostname,
-        int port,
-        int availableCores,
-        long availableMemoryMb,
-        String javaVersion
-) {}
-
-/**
- * Scenario assignment for a worker.
- */
-public record ScenarioAssignment(
-        String scenarioId,
-        String workerId,
-        long assignedRps,
-        String status
-) {}

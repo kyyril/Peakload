@@ -13,30 +13,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Redis-backed Worker Registry for tracking connected worker nodes.
- *
- * Architecture:
- * ┌──────────────────────────────────────────────────────────────┐
- * │                    WorkerRegistry                            │
-    │                                                               │
- * │   Redis Keys:                                                │
- * │   workers:list         → SET<worker_id>                      │
- * │   workers:{id}:info    → HASH (hostname, port, etc.)         │
- * │   workers:{id}:status → STRING (IDLE/RUNNING/DRAINING)      │
- * │   workers:{id}:heartbeat → STRING (timestamp)               │
---│
---│
- * │   TTL: All keys expire after 30s of no heartbeat             │
-    │                                                               │
- * │   Operations:                                                 │
-    │   register()      → Add worker to registry                   │
- * │   heartbeat()      → Update heartbeat timestamp              │
- * │   unregister()     → Remove worker from registry             │
---│
-    │   getAllWorkers()  → List all active workers                │
---│
-    │   assign(capacity) → Find workers with given capacity       │
- * └──────────────────────────────────────────────────────────────┘
- *
  * Thread Safety:
  * - All operations are atomic using Redis commands
  * - TTL provides automatic cleanup of stale workers

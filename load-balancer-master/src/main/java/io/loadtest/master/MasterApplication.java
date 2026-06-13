@@ -15,7 +15,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * - Metrics aggregation and streaming
  *
  * Startup Command:
- * ───────────────
  * java --enable-preview \\
  *      -XX:+UseZGC -XX:+ZGenerational \\
  *      -Xms1g -Xmx4g \\

@@ -1,8 +1,5 @@
 # ============================================================
 # Master Node Dockerfile
-# ============================================================
-# Spring Boot application with ZGC for low-latency metrics aggregation.
-# ============================================================
 
 ARG JAVA_VERSION=21
 
@@ -11,8 +8,8 @@ FROM eclipse-temurin:${JAVA_VERSION}-jdk-alpine AS builder
 
 WORKDIR /build
 
-# Install Maven
-RUN apk add --no-cache maven
+# Install Maven and build tools
+RUN apk add --no-cache maven build-base protobuf protobuf-dev gcompat libc6-compat
 
 # Copy root pom and all modules
 COPY pom.xml .
@@ -44,17 +41,17 @@ USER master
 
 # JVM configuration optimized for master node
 ENV JAVA_OPTS="-Xms1g \
-              -Xmx2g \
-              -XX:+UseZGC \
-              -XX:+ZGenerational \
-              -XX:+UseContainerSupport \
-              -XX:MaxRAMPercentage=75.0 \
-              -XX:+ExitOnOutOfMemoryError \
-              -XX:+HeapDumpOnOutOfMemoryError \
-              -XX:HeapDumpPath=/var/log/loadtest \
-              -Xlog:gc*:file=/var/log/loadtest/gc.log:time,uptime,level,tags \
-              --enable-preview \
-              -Dspring.profiles.active=container"
+  -Xmx2g \
+  -XX:+UseZGC \
+  -XX:+ZGenerational \
+  -XX:+UseContainerSupport \
+  -XX:MaxRAMPercentage=75.0 \
+  -XX:+ExitOnOutOfMemoryError \
+  -XX:+HeapDumpOnOutOfMemoryError \
+  -XX:HeapDumpPath=/var/log/loadtest \
+  -Xlog:gc*:file=/var/log/loadtest/gc.log:time,uptime,level,tags \
+  --enable-preview \
+  -Dspring.profiles.active=container"
 
 # Expose ports
 EXPOSE 8080 9090

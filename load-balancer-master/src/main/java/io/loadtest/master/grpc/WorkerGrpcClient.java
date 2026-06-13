@@ -53,10 +53,6 @@ public class WorkerGrpcClient {
         return WorkerServiceGrpc.newBlockingStub(channel);
     }
 
-    // ============================================================
-    // SCENARIO MANAGEMENT
-    // ============================================================
-
     /**
      * Deploy a scenario to a worker.
      */

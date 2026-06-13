@@ -73,7 +73,7 @@ public sealed interface HttpScenario permits
     record Post(
             String url,
             List<Header> headers,
-            RequestBody body,
+            RequestBody requestBody,
             Duration connectTimeout,
             Duration readTimeout,
             boolean followRedirects,
@@ -82,11 +82,11 @@ public sealed interface HttpScenario permits
         public Post {
             validateUrl(url);
             headers = List.copyOf(headers);
-            requireNonNull(body, "POST requests require a body (use empty body if needed)");
+            requireNonNull(requestBody, "POST requests require a body (use empty body if needed)");
         }
 
         @Override public HttpMethod method() { return HttpMethod.POST; }
-        @Override public Optional<RequestBody> body() { return Optional.of(body); }
+        @Override public Optional<RequestBody> body() { return Optional.of(requestBody); }
     }
 
     /**
@@ -95,7 +95,7 @@ public sealed interface HttpScenario permits
     record Put(
             String url,
             List<Header> headers,
-            RequestBody body,
+            RequestBody requestBody,
             Duration connectTimeout,
             Duration readTimeout,
             boolean followRedirects,
@@ -104,11 +104,11 @@ public sealed interface HttpScenario permits
         public Put {
             validateUrl(url);
             headers = List.copyOf(headers);
-            requireNonNull(body, "PUT requests require a body");
+            requireNonNull(requestBody, "PUT requests require a body");
         }
 
         @Override public HttpMethod method() { return HttpMethod.PUT; }
-        @Override public Optional<RequestBody> body() { return Optional.of(body); }
+        @Override public Optional<RequestBody> body() { return Optional.of(requestBody); }
     }
 
     /**
@@ -117,7 +117,7 @@ public sealed interface HttpScenario permits
     record Patch(
             String url,
             List<Header> headers,
-            RequestBody body,
+            RequestBody requestBody,
             Duration connectTimeout,
             Duration readTimeout,
             boolean followRedirects,
@@ -126,11 +126,11 @@ public sealed interface HttpScenario permits
         public Patch {
             validateUrl(url);
             headers = List.copyOf(headers);
-            requireNonNull(body, "PATCH requests require a body");
+            requireNonNull(requestBody, "PATCH requests require a body");
         }
 
         @Override public HttpMethod method() { return HttpMethod.PATCH; }
-        @Override public Optional<RequestBody> body() { return Optional.of(body); }
+        @Override public Optional<RequestBody> body() { return Optional.of(requestBody); }
     }
 
     /**
@@ -301,6 +301,7 @@ public sealed interface HttpScenario permits
                 case HTTP_METHOD_HEAD -> HEAD;
                 case HTTP_METHOD_OPTIONS -> OPTIONS;
                 case HTTP_METHOD_UNSPECIFIED -> throw new IllegalArgumentException("Unspecified HTTP method");
+                default -> throw new IllegalArgumentException("Unsupported or unrecognized HTTP method: " + proto);
             };
         }
 

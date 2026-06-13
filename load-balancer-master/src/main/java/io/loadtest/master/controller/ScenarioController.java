@@ -17,7 +17,6 @@ import java.util.List;
  * REST Controller for load test scenario management.
  *
  * API Endpoints:
- * ─────────────────────────────────────────────────────────────────
  * POST   /scenarios                     Create new test scenario
  * GET    /scenarios                     List all scenarios
  * GET    /scenarios/{id}                Get scenario details
@@ -31,7 +30,6 @@ import java.util.List;
  *
  * GET    /workers                        List connected workers
  * GET    /workers/{id}/health           Get worker health
- * ─────────────────────────────────────────────────────────────────
  */
 @RestController
 @RequestMapping("/v1/scenarios")
@@ -127,12 +125,12 @@ public class ScenarioController {
     // ============================================================
 
     @GetMapping("/workers")
-    public ResponseEntity<Object> listWorkers() {
+    public ResponseEntity<?> listWorkers() {
         return ResponseEntity.ok(orchestrationService.listWorkers());
     }
 
     @GetMapping("/workers/{workerId}/health")
-    public ResponseEntity<Object> getWorkerHealth(
+    public ResponseEntity<?> getWorkerHealth(
             @PathVariable String workerId
     ) {
         return orchestrationService.getWorkerHealth(workerId)

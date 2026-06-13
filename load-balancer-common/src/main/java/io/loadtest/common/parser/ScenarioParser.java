@@ -11,8 +11,10 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.DateTimeException;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 
@@ -72,10 +74,6 @@ public final class ScenarioParser {
         }
     }
 
-    // ============================================================
-    // PARSING ROOT TEST SCENARIO
-    // ============================================================
-
     private TestScenarioDefinition parseTestScenario(JsonNode root) throws ParseException {
         requireNonNull(root, "Root node cannot be null");
 
@@ -113,11 +111,6 @@ public final class ScenarioParser {
                 System.currentTimeMillis()
         );
     }
-
-    // ============================================================
-    // PARSING HTTP SCENARIO WITH PATTERN MATCHING
-    // ============================================================
-
     /**
      * Parse HTTP scenario configuration.
      *
@@ -196,18 +189,18 @@ public final class ScenarioParser {
             case com.fasterxml.jackson.databind.node.ObjectNode o -> {
                 // JSON object body
                 String json = o.toString();
-                yield new HttpScenario.RequestBody.json(json);
+                yield HttpScenario.RequestBody.json(json);
             }
             case com.fasterxml.jackson.databind.node.ArrayNode a -> {
                 // JSON array body
                 String json = a.toString();
-                yield new HttpScenario.RequestBody.json(json);
+                yield HttpScenario.RequestBody.json(json);
             }
             case com.fasterxml.jackson.databind.node.BinaryNode b -> {
                 String base64 = Base64.getEncoder().encodeToString(b.binaryValue());
                 yield contentType != null
                         ? new HttpScenario.RequestBody(base64, contentType)
-                        : new HttpScenario.RequestBody.binary(b.binaryValue(), "application/octet-stream");
+                        : HttpScenario.RequestBody.binary(b.binaryValue(), "application/octet-stream");
             }
             case com.fasterxml.jackson.databind.node.NullNode n -> {
                 // Empty body
@@ -253,10 +246,6 @@ public final class ScenarioParser {
         return new HttpScenario.RequestBody(content, "text/plain");
     }
 
-    // ============================================================
-    // PARSING LOAD PROFILE WITH PATTERN MATCHING
-    // ============================================================
-
     /**
      * Parse load profile configuration.
      *
@@ -301,10 +290,6 @@ public final class ScenarioParser {
         };
     }
 
-    // ============================================================
-    // PARSING HEADERS AND TAGS
-    // ============================================================
-
     /**
      * Parse headers collection.
      */
@@ -336,10 +321,6 @@ public final class ScenarioParser {
         });
         return Collections.unmodifiableMap(tags);
     }
-
-    // ============================================================
-    // UTILITY PARSERS
-    // ============================================================
 
     private JsonNode requiredField(JsonNode node, String fieldName) throws ParseException {
         JsonNode field = node.get(fieldName);
@@ -405,7 +386,7 @@ public final class ScenarioParser {
 
         try {
             return switch (field) {
-                case com.fasterxml.jackson.databind.node.NumberNode n -> Duration.ofMillis(n.asLong());
+                case com.fasterxml.jackson.databind.node.NumericNode n -> Duration.ofMillis(n.asLong());
                 case com.fasterxml.jackson.databind.node.TextNode t -> parseDurationString(t.asText());
                 default -> throw new ParseException("Field '" + fieldName + "' must be number or string");
             };
@@ -439,10 +420,6 @@ public final class ScenarioParser {
         // Plain number (milliseconds)
         return Duration.ofMillis(Long.parseLong(trimmed));
     }
-
-    // ============================================================
-    // EXCEPTION AND RESULT TYPES
-    // ============================================================
 
     /**
      * Parse exception with context.

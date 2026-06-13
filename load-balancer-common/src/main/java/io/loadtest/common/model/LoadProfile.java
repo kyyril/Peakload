@@ -56,14 +56,6 @@ public sealed interface LoadProfile permits
      * Constant load profile - sustained RPS throughout the test.
      *
      * Use case: Baseline performance testing, soak tests.
-     *
-     * Visualization:
-     * RPS
-     *  ^
-     *  |    ┌─────────────────┐
-     *  │    │                 │
-     *  │    │                 │
-     *  └────┴─────────────────┴──> time
      */
     record Constant(
             long targetRps,
@@ -96,18 +88,6 @@ public sealed interface LoadProfile permits
 
     /**
      * Ramp-up load profile - gradual increase to target RPS.
-     *
-     * Use case: Finding breaking points, progressive load testing.
-     *
-     * Visualization:
-     * RPS
-     *  ^               ┌─────────┐
-     *  │              /│         │
-     *  │             / │         │
-     *  │            /  │         │\
-     *  └───────────/   │         │ \───> time
-     *             ramp  hold    ramp
-     *             up            down
      */
     record RampUp(
             long targetRps,
@@ -185,14 +165,6 @@ public sealed interface LoadProfile permits
      *
      * Use case: Autoscaling validation, circuit breaker testing, chaos engineering.
      *
-     * Visualization:
-     * RPS
-     *  ^         ┌───┐
-     *  │         │   │
-     *  │         │   │
-     *  │_________│   │_________> time
-     *            spike
-     *
      * Why use Phaser/CyclicBarrier?
      * A true "spike" requires all threads to start simultaneously.
      * Without synchronization, threads stagger over 100-500ms due to
@@ -236,15 +208,6 @@ public sealed interface LoadProfile permits
      * Step-up load profile - incremental RPS increases.
      *
      * Use case: Capacity planning, finding the "knee" in performance curve.
-     *
-     * Visualization:
-     * RPS
-     *  ^         ┌───┐
-     *  │         │   │   ┌───┐
-     *  │     ┌───┤   ├───┤   │   ┌───┐
-     *  │  ┌──┤   │   │   │   ├───┤   │
-     *  └──┤  │   │   │   │   │   │   ├───> time
-     *     step1  step2  step3  step4
      */
     record StepUp(
             long initialRps,
@@ -298,10 +261,6 @@ public sealed interface LoadProfile permits
             return getRpsForStep(totalSteps);
         }
     }
-
-    // ============================================================
-    // BUILDER FOR FLEXIBLE CONFIGURATION
-    // ============================================================
 
     /**
      * Builder for creating load profiles from configuration files.

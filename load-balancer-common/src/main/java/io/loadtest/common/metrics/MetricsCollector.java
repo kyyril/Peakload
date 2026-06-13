@@ -12,7 +12,6 @@ import java.util.function.Consumer;
  * Lock-free metrics collector using LongAdder for high-throughput counting.
  *
  * VIRTUAL THREAD PINNING AVOIDANCE:
- * ═════════════════════════════════
  * This class is designed for Virtual Thread (Project Loom) compatibility:
  *
  * 1. ZERO synchronized blocks - Would pin carrier threads
@@ -28,30 +27,7 @@ import java.util.function.Consumer;
  *   LongAdder.increment()                  ← Lock-free, NO pinning!
  *   ConcurrentLinkedQueue.offer()           ← Lock-free, NO pinning!
  *   ConcurrentHashMap.computeIfAbsent()    ← Non-blocking, NO pinning!
- *
- * Why LongAdder instead of AtomicLong?
- * ─────────────────────────────────────
- * - AtomicLong uses CAS (Compare-And-Swap) loops under high contention
- * - At 100K RPS with 10 threads, AtomicLong suffers ~40% throughput degradation
- * - LongAdder uses striped counters (one per CPU cache line), ~10-20x faster
- * - Sum operation is eventually consistent (acceptable for metrics display)
- *
- * Architecture:
- * ┌─────────────────────────────────────────────────────────────┐
- * │                    MetricsCollector                          │
- * │                                                              │
- * │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
- * │  │LongAdder │  │LongAdder │  │LongAdder │  │Lock-Free │    │
- * │  │  totalOps│  │  success │  │  failure │  │  Latency │    │
- * │  └──────────┘  └──────────┘  └──────────┘  │ Histogram │    │
- * │                                            └───────────┘    │
- * │  ┌────────────────────────────────────────────────────┐    │
- * │  │  Batch Queue (MPSC) → Scheduled Flush (500ms)      │    │
- * │  │                    ↓                               │    │
- * │  │              Metrics Batch → gRPC Sink             │    │
- * │  └────────────────────────────────────────────────────┘    │
- * └─────────────────────────────────────────────────────────────┘
- *
+ * 
  * Thread Safety Model:
  * - LongAdder/DoubleAdder: Safe for concurrent increment from any thread
  * - LatencyHistogram: Lock-free writes using striped buffers
@@ -59,10 +35,6 @@ import java.util.function.Consumer;
  * - Flush operation: Runs on single scheduled thread, no contention with writes
  */
 public final class MetricsCollector {
-
-    // ============================================================
-    // COUNTERS - Lock-free using LongAdder
-    // ============================================================
 
     private final LongAdder totalRequests = new LongAdder();
     private final LongAdder successfulRequests = new LongAdder();
@@ -87,10 +59,6 @@ public final class MetricsCollector {
      * Keyed by error type (connection_timeout, dns_failure, etc.)
      */
     private final ConcurrentHashMap<String, LongAdder> errorCounts = new ConcurrentHashMap<>();
-
-    // ============================================================
-    // LATENCY TRACKING - Lock-free histogram
-    // ============================================================
 
     /**
      * High-performance latency histogram using HdrHistogram under the hood.
@@ -143,10 +111,6 @@ public final class MetricsCollector {
      */
     private ScheduledFuture<?> flushTask;
 
-    // ============================================================
-    // STATE MANAGEMENT
-    // ============================================================
-
     private final AtomicReference<Instant> startTime = new AtomicReference<>();
     private final AtomicBoolean running = new AtomicBoolean(false);
 
@@ -178,10 +142,6 @@ public final class MetricsCollector {
     public MetricsCollector() {
         this(1000, 500);
     }
-
-    // ============================================================
-    // LIFECYCLE MANAGEMENT
-    // ============================================================
 
     /**
      * Start the metrics collector and begin periodic flushing.
@@ -218,10 +178,6 @@ public final class MetricsCollector {
     public void setBatchSink(Consumer<MetricsBatch> sink) {
         this.batchSink = sink;
     }
-
-    // ============================================================
-    // RECORDING - Lock-free metric collection
-    // ============================================================
 
     /**
      * Record a single request metric.
@@ -264,10 +220,6 @@ public final class MetricsCollector {
         errorCounts.computeIfAbsent(errorType, k -> new LongAdder()).increment();
     }
 
-    // ============================================================
-    // BATCHING - MPSC to single consumer
-    // ============================================================
-
     /**
      * Flush pending metrics to the batch sink.
      *
@@ -295,10 +247,6 @@ public final class MetricsCollector {
             batchSink.accept(metricsBatch);
         }
     }
-
-    // ============================================================
-    // QUERYING - Thread-safe snapshot operations
-    // ============================================================
 
     /**
      * Get aggregate statistics snapshot.
@@ -353,11 +301,6 @@ public final class MetricsCollector {
         errorCounts.forEach((error, adder) -> distribution.put(error, adder.sum()));
         return Collections.unmodifiableMap(distribution);
     }
-
-    // ============================================================
-    // SUPPORTING TYPES
-    // ============================================================
-
     /**
      * Aggregate statistics record.
      */
@@ -393,11 +336,6 @@ public final class MetricsCollector {
     private record LatencyPercentiles(
             long p50, long p90, long p95, long p99, long min, long max
     ) {}
-
-    // ============================================================
-    // LOCK-FREE LATENCY HISTOGRAM
-    // ============================================================
-
     /**
      * Lock-free latency histogram using striped counters.
      *

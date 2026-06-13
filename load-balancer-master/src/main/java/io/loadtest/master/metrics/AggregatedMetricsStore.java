@@ -14,30 +14,6 @@ import java.util.concurrent.atomic.LongAdder;
  * In production, metrics are persisted to InfluxDB or ClickHouse.
  * This implementation provides fast in-memory aggregation for real-time dashboards.
  *
- * Data Structure:
- * ┌───────────────────────────────────────────────────────────────────┐
- * │                  AggregatedMetricsStore                            │
- * │                                                                     │
---│
- * │   scenarioMetrics: Map<scenarioId, MetricAccumulator>              │
- * │                                                                     │
-    │   ┌─────────────────────────────────────────────────────────────┐ │
-    │   │              MetricAccumulator                               │ │
-    │   │                                                               │ │
-    │   │   totalRequests: LongAdder                                   │ │
-    │   │   successfulRequests: LongAdder                              │ │
-    │   │   failedRequests: LongAdder                                  │ │
-    │   │   latencySum: LongAdder (for mean calculation)                │ │
-    │   │   latencySumSquares: LongAdder (for std dev calculation)     │ │
-    │   │   latencyMin: AtomicLong                                     │ │
-    │   │   latencyMax: AtomicLong                                      │ │
-    │   │   latencyHistogram: int[64] (for percentile calculation)   │ │
-    │   │   statusCodeCounts: ConcurrentMap<int, LongAdder>            │ │
-    │   │   bytesSent: LongAdder                                        │ │
-    │   │   bytesReceived: LongAdder                                   │ │
-    │   │   startTime: Instant                                          │ │
-    │   └─────────────────────────────────────────────────────────────┘ │
- * └───────────────────────────────────────────────────────────────────┘
  */
 @Component
 public class AggregatedMetricsStore {
