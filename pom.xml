@@ -9,9 +9,9 @@
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>Distributed Load Testing Platform</name>
+    <name>Peakload</name>
     <description>
-        FAANG-grade distributed load testing engine with Master-Worker architecture.
+        Distributed load testing engine with Master-Worker architecture.
         Features Virtual Threads (Project Loom), gRPC communication, and lock-free metrics collection.
     </description>
 

@@ -11,12 +11,17 @@ FROM eclipse-temurin:${JAVA_VERSION}-jdk-alpine AS builder
 
 WORKDIR /build
 
-# Copy Maven files
-COPY pom.xml .
-COPY src ./src
+# Install Maven
+RUN apk add --no-cache maven
 
-# Build with Maven wrapper
-RUN ./mvnw clean package -DskipTests -B
+# Copy root pom and all modules
+COPY pom.xml .
+COPY load-balancer-common ./load-balancer-common
+COPY load-balancer-master ./load-balancer-master
+COPY load-balancer-worker ./load-balancer-worker
+
+# Build entire project
+RUN mvn clean package -DskipTests -B
 
 # Runtime stage
 FROM eclipse-temurin:${JAVA_VERSION}-jre-alpine

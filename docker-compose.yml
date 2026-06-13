@@ -41,8 +41,8 @@ services:
   # ==========================================================
   master:
     build:
-      context: ./load-balancer-master
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: load-balancer-master/Dockerfile
       args:
         JAVA_VERSION: 21
     container_name: loadtest-master
@@ -80,8 +80,8 @@ services:
   # ==========================================================
   worker:
     build:
-      context: ./load-balancer-worker
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: load-balancer-worker/Dockerfile
       args:
         JAVA_VERSION: 21
     deploy:
