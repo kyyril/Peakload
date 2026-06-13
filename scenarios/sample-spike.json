@@ -1,0 +1,30 @@
+{
+  "id": "sample-spike-test",
+  "name": "Spike Test - Synchronized Burst",
+  "scenarios": [
+    {
+      "url": "https://httpbin.org/delay/0.1",
+      "method": "GET",
+      "headers": {
+        "User-Agent": "LoadTestEngine-Spike/1.0"
+      },
+      "connectTimeout": "2s",
+      "readTimeout": "5s",
+      "followRedirects": true,
+      "name": "GET /delay/0.1"
+    }
+  ],
+  "loadProfile": {
+    "type": "spike",
+    "targetRps": 100000,
+    "spikeDuration": "10s",
+    "maxConcurrency": 10000,
+    "synchronizedStart": true
+  },
+  "tags": {
+    "environment": "production",
+    "service": "httpbin",
+    "test_type": "spike",
+    "circuit_breaker_test": "true"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "sample-constant-test",
+  "name": "API Health Check - Constant Load",
+  "scenarios": [
+    {
+      "url": "https://httpbin.org/get",
+      "method": "GET",
+      "headers": {
+        "User-Agent": "LoadTestEngine/1.0",
+        "Accept": "application/json"
+      },
+      "connectTimeout": "5s",
+      "readTimeout": "30s",
+      "followRedirects": true,
+      "name": "GET /get"
+    }
+  ],
+  "loadProfile": {
+    "type": "constant",
+    "targetRps": 5000,
+    "duration": "60s",
+    "maxConcurrency": 1000
+  },
+  "tags": {
+    "environment": "development",
+    "service": "httpbin",
+    "test_type": "baseline"
+  }
+}

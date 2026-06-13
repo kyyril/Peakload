@@ -1,0 +1,199 @@
+# ============================================================
+# Distributed Load Testing Platform - Local Development Stack
+# ============================================================
+#
+# This compose file provides a complete local environment for:
+# - Running the Master node (Spring Boot)
+# - Running multiple Worker nodes (Vanilla Java 21)
+# - InfluxDB for metrics persistence
+# - Redis for worker registry and coordination
+# - Grafana for real-time metrics visualization
+#
+# USAGE:
+#   # Start all services
+#   docker-compose up -d
+#
+#   # Scale workers (run 3 worker instances)
+#   docker-compose up -d --scale worker=3
+#
+#   # View logs
+#   docker-compose logs -f master worker
+#
+#   # Stop all services
+#   docker-compose down
+#
+# ACCESS:
+#   - Master REST API:     http://localhost:8080/api
+#   - Master gRPC:         localhost:9090
+#   - InfluxDB UI:         http://localhost:8086
+#   - Grafana Dashboard:   http://localhost:3000 (admin/admin)
+#   - Redis:               localhost:6379
+#
+# IMPORTANT JVM FLAGS (for accurate latency measurements):
+#   -XX:+UseZGC -XX:+ZGenerational    # Ultra-low latency garbage collector (<1ms pauses)
+#   -XX:ZAllocationSpikeTolerance=5   # Handle burst allocation during synchronized starts
+#   --enable-preview                  # Enable Virtual Threads (Java 21)
+# ============================================================
+
+services:
+  # ==========================================================
+  # MASTER NODE - Spring Boot Control Plane
+  # ==========================================================
+  master:
+    build:
+      context: ./load-balancer-master
+      dockerfile: Dockerfile
+      args:
+        JAVA_VERSION: 21
+    container_name: loadtest-master
+    hostname: master
+    ports:
+      - "8080:8080"   # REST API
+      - "9090:9090"   # gRPC
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - INFLUX_ENABLED=true
+      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_TOKEN=loadtest-token
+      - INFLUXDB_ORG=loadtest
+      - INFLUXDB_BUCKET=metrics
+      - JAVA_OPTS=--enable-preview -XX:+UseZGC -XX:+ZGenerational -Xms1g -Xmx2g
+    depends_on:
+      redis:
+        condition: service_healthy
+      influxdb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - loadtest-network
+    restart: unless-stopped
+
+  # ==========================================================
+  # WORKER NODES - Vanilla Java 21 Load Generators
+  # ==========================================================
+  worker:
+    build:
+      context: ./load-balancer-worker
+      dockerfile: Dockerfile
+      args:
+        JAVA_VERSION: 21
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    environment:
+      - MASTER_HOST=master
+      - MASTER_PORT=9090
+      - WORKER_PORT=50051
+      - JAVA_OPTS=--enable-preview -XX:+UseZGC -XX:+ZGenerational -Xms512m -Xmx1g -XX:+UnlockExperimentalVMOptions -XX:ZAllocationSpikeTolerance=5
+    depends_on:
+      master:
+        condition: service_healthy
+    networks:
+      - loadtest-network
+    restart: unless-stopped
+
+  # ==========================================================
+  # REDIS - Worker Registry & Coordination
+  # ==========================================================
+  redis:
+    image: redis:7.2-alpine
+    container_name: loadtest-redis
+    hostname: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - loadtest-network
+    restart: unless-stopped
+
+  # ==========================================================
+  # INFLUXDB - Time-Series Metrics Storage
+  # ==========================================================
+  influxdb:
+    image: influxdb:2.7-alpine
+    container_name: loadtest-influxdb
+    hostname: influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=adminpassword
+      - DOCKER_INFLUXDB_INIT_ORG=loadtest
+      - DOCKER_INFLUXDB_INIT_BUCKET=metrics
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=loadtest-token
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+      - influxdb-config:/etc/influxdb2
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - loadtest-network
+    restart: unless-stopped
+
+  # ==========================================================
+  # GRAFANA - Real-Time Metrics Dashboard
+  # ==========================================================
+  grafana:
+    image: grafana/grafana:10.4
+    container_name: loadtest-grafana
+    hostname: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=true
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - influxdb
+    networks:
+      - loadtest-network
+    restart: unless-stopped
+
+# ==========================================================
+# NETWORKS
+# ==========================================================
+networks:
+  loadtest-network:
+    driver: bridge
+    name: loadtest-network
+
+# ==========================================================
+# VOLUMES
+# ==========================================================
+volumes:
+  redis-data:
+    name: loadtest-redis-data
+  influxdb-data:
+    name: loadtest-influxdb-data
+  influxdb-config:
+    name: loadtest-influxdb-config
+  grafana-data:
+    name: loadtest-grafana-data

@@ -1,0 +1,80 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: loadtest-master
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 5000ms
+
+      jedis:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+grpc:
+  server:
+    port: 9090
+    max-inbound-message-size: 104857600 # 100MB
+    max-outbound-message-size: 104857600 # 100MB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+influxdb:
+  enabled: ${INFLUX_ENABLED:false}
+  url: ${INFLUXDB_URL:http://localhost:8086}
+  token: ${INFLUXDB_TOKEN:}
+  org: ${INFLUXDB_ORG:loadtest}
+  bucket: ${INFLUXDB_BUCKET:metrics}
+
+logging:
+  level:
+    root: INFO
+    io.loadtest: DEBUG
+    io.grpc: INFO
+    org.springframework.web: INFO
+
+---
+# Development profile
+spring.config.activate.on-profile: dev
+
+server:
+  port: 8080
+
+grpc:
+  server:
+    port: 9090
+
+logging:
+  level:
+    io.loadtest: DEBUG
+
+---
+# Production profile
+spring.config.activate.on-profile: prod
+
+spring:
+  data:
+    redis:
+      ssl:
+        enabled: true
+
+logging:
+  level:
+    root: INFO
+    io.loadtest: INFO

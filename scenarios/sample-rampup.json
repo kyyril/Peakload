@@ -1,0 +1,32 @@
+{
+  "id": "sample-rampup-test",
+  "name": "API Stress Test - Progressive Ramp",
+  "scenarios": [
+    {
+      "url": "https://httpbin.org/post",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer test-token"
+      },
+      "body": "{\"test\": true, \"timestamp\": \"${timestamp}\"}",
+      "connectTimeout": "5s",
+      "readTimeout": "30s",
+      "followRedirects": false,
+      "name": "POST /post"
+    }
+  ],
+  "loadProfile": {
+    "type": "ramp-up",
+    "targetRps": 50000,
+    "rampUpDuration": "30s",
+    "holdDuration": "120s",
+    "rampDownDuration": "15s",
+    "maxConcurrency": 5000
+  },
+  "tags": {
+    "environment": "staging",
+    "service": "httpbin",
+    "test_type": "stress"
+  }
+}

@@ -1,0 +1,345 @@
+/**
+ * Distributed Load Testing Platform - gRPC Service Definitions
+ *
+ * Architecture Choice: Why Protobuf over JSON?
+ * - Binary serialization: 3-10x smaller payloads, critical for high-frequency metrics streaming
+ * - Schema evolution: Backward/forward compatible API changes without breaking workers
+ * - Strong typing: Compile-time contract enforcement prevents runtime serialization bugs
+ * - HTTP/2 multiplexing: Single TCP connection for thousands of concurrent metric streams
+ */
+
+syntax = "proto3";
+
+package io.loadtest.v1;
+
+option java_multiple_files = true;
+option java_package = "io.loadtest.v1";
+option java_outer_classname = "LoadTestProtos";
+
+// ============================================================
+// ENUMERATIONS
+// ============================================================
+
+/**
+ * HTTP methods supported by the load generator.
+ */
+enum HttpMethod {
+  HTTP_METHOD_UNSPECIFIED = 0;
+  HTTP_METHOD_GET = 1;
+  HTTP_METHOD_POST = 2;
+  HTTP_METHOD_PUT = 3;
+  HTTP_METHOD_PATCH = 4;
+  HTTP_METHOD_DELETE = 5;
+  HTTP_METHOD_HEAD = 6;
+  HTTP_METHOD_OPTIONS = 7;
+}
+
+/**
+ * Worker status for health monitoring.
+ */
+enum WorkerStatus {
+  WORKER_STATUS_UNSPECIFIED = 0;
+  WORKER_STATUS_IDLE = 1;
+  WORKER_STATUS_INITIALIZING = 2;
+  WORKER_STATUS_RUNNING = 3;
+  WORKER_STATUS_DRAINING = 4;
+  WORKER_STATUS_ERROR = 5;
+}
+
+/**
+ * Test scenario status.
+ */
+enum TestStatus {
+  TEST_STATUS_UNSPECIFIED = 0;
+  TEST_STATUS_QUEUED = 1;
+  TEST_STATUS_INITIALIZING = 2;
+  TEST_STATUS_RUNNING = 3;
+  TEST_STATUS_STOPPING = 4;
+  TEST_STATUS_COMPLETED = 5;
+  TEST_STATUS_FAILED = 6;
+  TEST_STATUS_CANCELLED = 7;
+}
+
+// ============================================================
+// MESSAGE DEFINITIONS - SCENARIO CONFIGURATION
+// ============================================================
+
+/**
+ * HTTP header for request configuration.
+ */
+message HttpHeader {
+  string key = 1;
+  string value = 2;
+}
+
+/**
+ * Request body configuration.
+ * Supports both raw string content and file references.
+ */
+message RequestBody {
+  oneof content {
+    string raw_content = 1;
+    string file_path = 2;
+  }
+  string content_type = 3; // e.g., "application/json", "application/x-www-form-urlencoded"
+}
+
+/**
+ * Single HTTP request configuration.
+ * Immutable by design - sent once at test start, never modified.
+ */
+message HttpScenario {
+  string url = 1;                          // Target URL with protocol
+  HttpMethod method = 2;                   // HTTP method
+  repeated HttpHeader headers = 3;         // Request headers
+  RequestBody body = 4;                    // Optional request body
+  int32 connect_timeout_ms = 5;            // Connection timeout (default: 5000ms)
+  int32 read_timeout_ms = 6;               // Read timeout (default: 30000ms)
+  bool follow_redirects = 7;               // Whether to follow redirects
+  int32 max_redirects = 8;                  // Max redirect chain length
+  string name = 9;                         // Human-readable scenario name for reporting
+}
+
+/**
+ * Load profile configuration.
+ * Defines how load is distributed over time.
+ */
+message LoadProfile {
+  int64 target_rps = 1;                     // Target requests per second
+  int64 ramp_up_duration_ms = 2;            // Time to ramp up to target RPS
+  int64 hold_duration_ms = 3;               // Duration at target RPS
+  int64 ramp_down_duration_ms = 4;          // Time to ramp down
+  int64 total_requests = 5;                 // Alternative: total request count instead of duration
+
+  oneof concurrency_model {
+    int64 virtual_users = 6;                // Number of concurrent virtual users
+    int64 max_concurrent_requests = 7;      // Max concurrent HTTP connections
+  }
+}
+
+/**
+ * Complete test scenario definition.
+ * This is the top-level message sent from Master to Workers.
+ */
+message TestScenario {
+  string scenario_id = 1;                   // Unique identifier (UUID)
+  string scenario_name = 2;                 // Human-readable name
+  repeated HttpScenario http_scenarios = 3; // One or more HTTP scenarios (weighted random selection)
+  LoadProfile load_profile = 4;             // Load generation parameters
+  map<string, string> tags = 5;             // Metadata tags for filtering/grouping results
+  int64 created_timestamp_ms = 6;           // Creation timestamp (epoch millis)
+}
+
+// ============================================================
+// MESSAGE DEFINITIONS - METRICS & RESULTS
+// ============================================================
+
+/**
+ * Single request execution metric.
+ * Optimized for minimal wire size - all timestamps are epoch millis.
+ */
+message RequestMetric {
+  int64 timestamp_ms = 1;                   // When was the request initiated?
+  int64 latency_ms = 2;                     // End-to-end latency (connection + request + response)
+  int32 status_code = 3;                    // HTTP status code (200, 404, 500, etc.)
+  bool success = 4;                         // Derived from status code or connection error
+  string error_message = 5;                 // Populated only on failure
+  string scenario_id = 6;                   // Reference to parent scenario
+  string worker_id = 7;                      // Worker that generated this request
+  int64 request_bytes = 8;                  // Request payload size
+  int64 response_bytes = 9;                 // Response payload size
+  int64 dns_time_ms = 10;                   // DNS resolution time
+  int64 connect_time_ms = 11;               // TCP connection establishment time
+  int64 tls_time_ms = 12;                   // TLS handshake time
+  int64 ttfb_ms = 13;                       // Time to first byte
+  string trace_id = 14;                     // Distributed tracing correlation ID
+}
+
+/**
+ * Batched metrics for efficient streaming.
+ * Why batching? Each gRPC message has ~50 bytes overhead. At 100K RPS,
+ * individual metric messages waste ~5MB/s just on framing. Batching
+ * at 500ms intervals with ~500 metrics per batch reduces overhead by 99%.
+ */
+message MetricsBatch {
+  repeated RequestMetric metrics = 1;
+  string worker_id = 2;
+  int64 batch_start_ms = 3;
+  int64 batch_end_ms = 4;
+  int32 total_requests_in_batch = 5;
+}
+
+/**
+ * Aggregate statistics snapshot.
+ * Used for real-time dashboard updates without sending raw metrics.
+ */
+message AggregateStats {
+  string scenario_id = 1;
+  int64 timestamp_ms = 2;
+
+  // Counters (use int64, not int32 - tests can run billions of requests)
+  int64 total_requests = 3;
+  int64 successful_requests = 4;
+  int64 failed_requests = 5;
+
+  // Latency percentiles (milliseconds)
+  int64 latency_p50_ms = 10;
+  int64 latency_p90_ms = 11;
+  int64 latency_p95_ms = 12;
+  int64 latency_p99_ms = 13;
+  int64 latency_max_ms = 14;
+  int64 latency_min_ms = 15;
+  int64 latency_mean_ms = 16;
+  double latency_std_dev = 17;
+
+  // Throughput
+  int64 current_rps = 20;                   // Requests per second (calculated over last second)
+  int64 bytes_received = 21;
+  int64 bytes_sent = 22;
+
+  // Error breakdown
+  map<int32, int64> status_code_counts = 30; // HTTP status code -> count
+  map<string, int64> error_counts = 31;     // Error type -> count
+}
+
+// ============================================================
+// MESSAGE DEFINITIONS - WORKER MANAGEMENT
+// ============================================================
+
+/**
+ * Worker registration request.
+ * Sent when a worker starts up and connects to the master.
+ */
+message WorkerRegistration {
+  string worker_id = 1;                     // Unique worker identifier (UUID)
+  string hostname = 2;                      // Worker hostname
+  int32 port = 3;                           // gRPC port for direct communication
+  int32 available_cores = 4;                // CPU cores available
+  int64 available_memory_mb = 5;            // Memory available
+  string java_version = 6;                   // JVM version string
+  WorkerStatus initial_status = 7;
+}
+
+/**
+ * Worker heartbeat.
+ * Sent every 5 seconds for health monitoring.
+ */
+message WorkerHeartbeat {
+  string worker_id = 1;
+  int64 timestamp_ms = 2;
+  WorkerStatus status = 3;
+  int32 active_threads = 4;                 // Currently running virtual threads
+  double cpu_usage_percent = 5;             // CPU utilization
+  long used_memory_mb = 6;                  // Memory in use
+  int32 active_scenarios = 7;               // Number of scenarios this worker is executing
+}
+
+/**
+ * Worker state update response.
+ */
+message WorkerStateUpdate {
+  string worker_id = 1;
+  bool accepted = 2;
+  optional string rejection_reason = 3;
+}
+
+// ============================================================
+// SERVICE DEFINITIONS
+// ============================================================
+
+/**
+ * Master-side gRPC service.
+ * Workers call this service to register, send heartbeats, and stream metrics.
+ */
+service MasterService {
+  // Worker registration (unary - called once at startup)
+  rpc RegisterWorker(WorkerRegistration) returns (WorkerStateUpdate);
+
+  // Heartbeat stream (client streaming - keeps connection alive)
+  rpc WorkerHeartbeatStream(stream WorkerHeartbeat) returns (WorkerStateUpdate);
+
+  // Metrics streaming (client streaming - high throughput)
+  rpc StreamMetrics(stream MetricsBatch) returns (AckResponse);
+
+  // Request test assignment (unary - worker pulls work)
+  rpc RequestWorkAssignment(WorkRequest) returns (WorkAssignment);
+}
+
+/**
+ * Worker-side gRPC service.
+ * Master calls this service to dispatch scenarios and control execution.
+ */
+service WorkerService {
+  // Deploy a test scenario to the worker
+  rpc DeployScenario(TestScenario) returns (ScenarioAck);
+
+  // Start test execution
+  rpc StartTest(StartTestCommand) returns (StartTestAck);
+
+  // Stop test execution (graceful shutdown)
+  rpc StopTest(StopTestCommand) returns (StopTestAck);
+
+  // Get real-time aggregate stats
+  rpc GetStats(StatsRequest) returns (AggregateStats);
+
+  // Health check
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+// ============================================================
+// HELPER MESSAGES
+// ============================================================
+
+message AckResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message WorkRequest {
+  string worker_id = 1;
+  int32 max_scenarios = 2;                  // How many scenarios can this worker handle?
+}
+
+message WorkAssignment {
+  repeated TestScenario scenarios = 1;
+  bool has_work = 2;
+}
+
+message ScenarioAck {
+  bool accepted = 1;
+  string scenario_id = 2;
+  optional string error_message = 3;
+}
+
+message StartTestCommand {
+  string scenario_id = 1;
+  int64 start_timestamp_ms = 2;            // When should the test start? (for synchronized burst)
+}
+
+message StartTestAck {
+  bool started = 1;
+  string scenario_id = 2;
+}
+
+message StopTestCommand {
+  string scenario_id = 1;
+  bool immediate = 2;                       // false = graceful drain, true = immediate stop
+}
+
+message StopTestAck {
+  bool stopped = 1;
+  int64 requests_in_flight = 2;            // How many requests were interrupted?
+}
+
+message StatsRequest {
+  string scenario_id = 1;
+}
+
+message HealthCheckRequest {
+  string service_name = 1;
+}
+
+message HealthCheckResponse {
+  bool healthy = 1;
+  string message = 2;
+}
