@@ -33,9 +33,9 @@ public class MasterGrpcService extends MasterServiceGrpc.MasterServiceImplBase {
         this.metricsStore = metricsStore;
     }
 
-    // ============================================================
+    
     // WORKER REGISTRATION
-    // ============================================================
+    
 
     @Override
     public void registerWorker(WorkerRegistration request, StreamObserver<WorkerStateUpdate> responseObserver) {
@@ -79,9 +79,9 @@ public class MasterGrpcService extends MasterServiceGrpc.MasterServiceImplBase {
         }
     }
 
-    // ============================================================
+    
     // HEARTBEAT STREAMING
-    // ============================================================
+    
 
     @Override
     public StreamObserver<WorkerHeartbeat> workerHeartbeatStream(StreamObserver<WorkerStateUpdate> responseObserver) {
@@ -126,9 +126,9 @@ public class MasterGrpcService extends MasterServiceGrpc.MasterServiceImplBase {
         };
     }
 
-    // ============================================================
+    
     // METRICS STREAMING
-    // ============================================================
+    
 
     /**
      * High-throughput metrics streaming from workers.
@@ -188,9 +188,9 @@ public class MasterGrpcService extends MasterServiceGrpc.MasterServiceImplBase {
         };
     }
 
-    // ============================================================
+    
     // WORK ASSIGNMENT
-    // ============================================================
+    
 
     @Override
     public void requestWorkAssignment(WorkRequest request, StreamObserver<WorkAssignment> responseObserver) {

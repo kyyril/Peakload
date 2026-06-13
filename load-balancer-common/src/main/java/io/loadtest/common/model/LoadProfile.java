@@ -48,9 +48,9 @@ public sealed interface LoadProfile permits
      */
     OptionalLong estimatedTotalRequests();
 
-    // ============================================================
+    
     // LOAD PROFILE IMPLEMENTATIONS
-    // ============================================================
+    
 
     /**
      * Constant load profile - sustained RPS throughout the test.

@@ -90,9 +90,9 @@ public class ScenarioOrchestrationService {
         this.scenarioParser = new ScenarioParser();
     }
 
-    // ============================================================
+    
     // SCENARIO MANAGEMENT
-    // ============================================================
+    
 
     /**
      * Create a new test scenario.
@@ -162,9 +162,9 @@ public class ScenarioOrchestrationService {
         metricsStore.clear(scenarioId);
     }
 
-    // ============================================================
+    
     // TEST EXECUTION
-    // ============================================================
+    
 
     /**
      * Start a test scenario.
@@ -319,9 +319,9 @@ public class ScenarioOrchestrationService {
         return Optional.ofNullable(metricsStore.getSummary(scenarioId));
     }
 
-    // ============================================================
+    
     // WORKER MANAGEMENT
-    // ============================================================
+    
 
     public List<WorkerInfo> listWorkers() {
         return workerRegistry.getAllWorkers();
@@ -338,9 +338,9 @@ public class ScenarioOrchestrationService {
                 ));
     }
 
-    // ============================================================
+    
     // INTERNAL METHODS
-    // ============================================================
+    
 
     private boolean isRunning(String scenarioId) {
         ScenarioInstanceState state = instanceStates.get(scenarioId);

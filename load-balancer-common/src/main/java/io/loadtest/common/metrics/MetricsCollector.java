@@ -44,9 +44,9 @@ public final class MetricsCollector {
     private final LongAdder bytesSent = new LongAdder();
     private final LongAdder bytesReceived = new LongAdder();
 
-    // ============================================================
+    
     // ERROR TRACKING - Lock-free counting
-    // ============================================================
+    
 
     /**
      * Status code distribution.
@@ -73,9 +73,9 @@ public final class MetricsCollector {
      */
     private final LockFreeLatencyHistogram latencyHistogram;
 
-    // ============================================================
+    
     // BATCHING - MPSC queue to single consumer
-    // ============================================================
+    
 
     /**
      * Queue for incoming metrics awaiting batch processing.
@@ -114,9 +114,9 @@ public final class MetricsCollector {
     private final AtomicReference<Instant> startTime = new AtomicReference<>();
     private final AtomicBoolean running = new AtomicBoolean(false);
 
-    // ============================================================
+    
     // CONSTRUCTOR
-    // ============================================================
+    
 
     /**
      * Create a new MetricsCollector.

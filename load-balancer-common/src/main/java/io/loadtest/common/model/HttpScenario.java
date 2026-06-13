@@ -43,9 +43,9 @@ public sealed interface HttpScenario permits
      */
     Optional<RequestBody> body();
 
-    // ============================================================
+    
     // SPECIFIC HTTP METHOD IMPLEMENTATIONS
-    // ============================================================
+    
 
     /**
      * GET request scenario - safe, idempotent, cacheable.
@@ -173,9 +173,9 @@ public sealed interface HttpScenario permits
         }
     }
 
-    // ============================================================
+    
     // VALIDATION & UTILITIES
-    // ============================================================
+    
 
     /**
      * URL validation with strict RFC 3986 compliance.
@@ -202,9 +202,9 @@ public sealed interface HttpScenario permits
             "(\\?[^\\s]+)?$"                        // Optional query string
     );
 
-    // ============================================================
+    
     // SUPPORTING TYPES
-    // ============================================================
+    
 
     /**
      * HTTP header as a key-value pair.

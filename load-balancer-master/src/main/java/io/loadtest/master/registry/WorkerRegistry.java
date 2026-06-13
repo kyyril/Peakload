@@ -36,9 +36,9 @@ public class WorkerRegistry {
         this.redisTemplate = redisTemplate;
     }
 
-    // ============================================================
+    
     // REGISTRATION
-    // ============================================================
+    
 
     /**
      * Register a new worker node.
@@ -84,9 +84,9 @@ public class WorkerRegistry {
         redisTemplate.delete(WORKER_HEARTBEAT_PREFIX + workerId);
     }
 
-    // ============================================================
+    
     // HEARTBEAT
-    // ============================================================
+    
 
     /**
      * Update worker heartbeat timestamp.
@@ -110,9 +110,9 @@ public class WorkerRegistry {
         return heartbeatTime.plus(HEARTBEAT_TIMEOUT).isAfter(Instant.now());
     }
 
-    // ============================================================
+    
     // STATUS MANAGEMENT
-    // ============================================================
+    
 
     /**
      * Set worker status.
@@ -131,9 +131,9 @@ public class WorkerRegistry {
         return status != null ? status.toString() : "UNKNOWN";
     }
 
-    // ============================================================
+    
     // QUERYING
-    // ============================================================
+    
 
     /**
      * Get all registered workers.
@@ -163,17 +163,21 @@ public class WorkerRegistry {
             return Optional.empty();
         }
 
-        WorkerInfo workerInfo = WorkerInfo.builder()
-                .workerId(getString(info, "workerId"))
-                .hostname(getString(info, "hostname"))
-                .port(getInt(info, "port"))
-                .status(getWorkerStatus(workerId))
-                .availableCores(getInt(info, "availableCores"))
-                .availableMemoryMb(getLong(info, "availableMemoryMb"))
-                .javaVersion(getString(info, "javaVersion"))
-                .registeredAt(Instant.parse(getString(info, "registeredAt")))
-                .lastHeartbeat(getLastHeartbeat(workerId))
-                .build();
+        WorkerInfo workerInfo = new WorkerInfo(
+                getString(info, "workerId"),
+                getString(info, "hostname"),
+                getInt(info, "port"),
+                getWorkerStatus(workerId),
+                getInt(info, "availableCores"),
+                getLong(info, "availableMemoryMb"),
+                getString(info, "javaVersion"),
+                Instant.parse(getString(info, "registeredAt")),
+                getLastHeartbeat(workerId),
+                0,
+                0,
+                0.0,
+                0L
+        );
 
         return Optional.of(workerInfo);
     }
@@ -190,9 +194,9 @@ public class WorkerRegistry {
                 .toList();
     }
 
-    // ============================================================
+    
     // HELPER METHODS
-    // ============================================================
+    
 
     private void refreshTTL(String workerId) {
         redisTemplate.expire(WORKER_INFO_PREFIX + workerId + ":info", REGISTRATION_TTL);

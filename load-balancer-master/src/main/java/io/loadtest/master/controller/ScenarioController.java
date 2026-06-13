@@ -41,9 +41,9 @@ public class ScenarioController {
         this.orchestrationService = orchestrationService;
     }
 
-    // ============================================================
+    
     // SCENARIO CRUD
-    // ============================================================
+    
 
     @PostMapping
     public ResponseEntity<ScenarioResponse> createScenario(
@@ -80,9 +80,9 @@ public class ScenarioController {
         return ResponseEntity.noContent().build();
     }
 
-    // ============================================================
+    
     // TEST EXECUTION CONTROL
-    // ============================================================
+    
 
     @PostMapping("/{scenarioId}/start")
     public ResponseEntity<ScenarioStatus> startTest(
@@ -120,9 +120,9 @@ public class ScenarioController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // ============================================================
+    
     // WORKER MANAGEMENT
-    // ============================================================
+    
 
     @GetMapping("/workers")
     public ResponseEntity<?> listWorkers() {

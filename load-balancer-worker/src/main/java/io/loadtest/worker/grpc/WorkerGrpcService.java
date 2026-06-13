@@ -76,9 +76,9 @@ public final class WorkerGrpcService extends WorkerServiceGrpc.WorkerServiceImpl
         log.info("Worker service stopped: workerId={}", workerId);
     }
 
-    // ============================================================
+    
     // gRPC SERVICE IMPLEMENTATIONS
-    // ============================================================
+    
 
     @Override
     public void deployScenario(TestScenario request, StreamObserver<ScenarioAck> responseObserver) {
@@ -220,9 +220,9 @@ public final class WorkerGrpcService extends WorkerServiceGrpc.WorkerServiceImpl
         responseObserver.onCompleted();
     }
 
-    // ============================================================
+    
     // HELPER METHODS
-    // ============================================================
+    
 
     /**
      * Parse protobuf TestScenario into domain TestScenarioDefinition.
@@ -293,9 +293,9 @@ public final class WorkerGrpcService extends WorkerServiceGrpc.WorkerServiceImpl
         return currentStatus.get();
     }
 
-    // ============================================================
+    
     // SCENARIO MANAGER
-    // ============================================================
+    
 
     /**
      * Manages active scenarios and their load generators.

@@ -94,9 +94,9 @@ public final class VirtualThreadLoadGenerator implements AutoCloseable {
 
     private static final Logger log = LoggerFactory.getLogger(VirtualThreadLoadGenerator.class);
 
-    // ============================================================
+
     // CONFIGURATION
-    // ============================================================
+
 
     private final String scenarioId;
     private final String workerId;
@@ -105,9 +105,9 @@ public final class VirtualThreadLoadGenerator implements AutoCloseable {
     private final HttpClient httpClient;
     private final MetricsCollector metricsCollector;
 
-    // ============================================================
+
     // EXECUTOR & CONCURRENCY
-    // ============================================================
+
 
     /**
      * Virtual thread executor for task dispatch.
@@ -130,9 +130,9 @@ public final class VirtualThreadLoadGenerator implements AutoCloseable {
      */
     private Phaser burstPhaser;
 
-    // ============================================================
+
     // RATE LIMITING
-    // ============================================================
+
 
     /**
      * Token bucket rate limiter state.
@@ -140,18 +140,18 @@ public final class VirtualThreadLoadGenerator implements AutoCloseable {
      */
     private volatile RateLimiter rateLimiter;
 
-    // ============================================================
+
     // STATE MANAGEMENT
-    // ============================================================
+
 
     private final AtomicReference<RunState> state = new AtomicReference<>(RunState.IDLE);
     private final AtomicLong requestsGenerated = new AtomicLong(0);
     private final AtomicLong startTimeMs = new AtomicLong(0);
     private final AtomicLong targetStopTimeMs = new AtomicLong(0);
 
-    // ============================================================
+
     // CONSTRUCTOR AND INITIALIZATION
-    // ============================================================
+
 
     /**
      * Create a new load generator.
@@ -196,9 +196,9 @@ public final class VirtualThreadLoadGenerator implements AutoCloseable {
                 .build();
     }
 
-    // ============================================================
+
     // LIFECYCLE MANAGEMENT
-    // ============================================================
+
 
     /**
      * Run states for state machine.
@@ -317,9 +317,9 @@ public final class VirtualThreadLoadGenerator implements AutoCloseable {
         }
     }
 
-    // ============================================================
+
     // CORE LOAD GENERATION LOOP
-    // ============================================================
+
 
     /**
      * Main load generation loop.
@@ -401,9 +401,9 @@ public final class VirtualThreadLoadGenerator implements AutoCloseable {
         return false;
     }
 
-    // ============================================================
+
     // REQUEST DISPATCH
-    // ============================================================
+
 
     /**
      * Dispatch a single request in a virtual thread.
@@ -519,9 +519,9 @@ public final class VirtualThreadLoadGenerator implements AutoCloseable {
         return builder.build();
     }
 
-    // ============================================================
+
     // RATE LIMITER (Token Bucket)
-    // ============================================================
+
 
     /**
      * Token bucket rate limiter for precise RPS control.

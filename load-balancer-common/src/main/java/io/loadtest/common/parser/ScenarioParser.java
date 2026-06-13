@@ -434,9 +434,9 @@ public final class ScenarioParser {
         }
     }
 
-    // ============================================================
+    
     // RESULT TYPE
-    // ============================================================
+    
 
     /**
      * Immutable test scenario definition.

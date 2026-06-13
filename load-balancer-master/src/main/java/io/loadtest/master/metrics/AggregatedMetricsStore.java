@@ -66,9 +66,9 @@ public class AggregatedMetricsStore {
         scenarioMetrics.remove(scenarioId);
     }
 
-    // ============================================================
+    
     // INTERNAL ACCUMULATOR
-    // ============================================================
+    
 
     /**
      * Internal metric accumulator using LongAdder for high throughput.
